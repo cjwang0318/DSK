@@ -1,13 +1,7 @@
 import img_send
 import seg_send
+import re
 
-# ocr_results = ['行', '箱資訊', '箱/展', '“箱/板', 'PCB', '訂貨箱', '拒收原因', '商品代', '商品名稿', '訂單量', '收資訊', '號', 'SPCB', '長x真高，重量',
-#                '數', '/板蛋量', '數量', '6', '一匙罐抗菌EX超縮洗粉', '總件敷：0', '37.00×35.00×17.00', '9.00 72.00', '1.8KG', '432', '72',
-#                '11101039001', '總箱敷：72', '12.20', '8.00878.40', '1', 'A-018-0004-01', '公斤：0.00', '有效日期：2025-03-11', '6',
-#                'Ex一匙囊抗菌洗衣精補', '總件敷：0', '30.00×25.00×28.00', '12.0072.00', '468', '1.5KG', '78', '11103021001', '總箱數：78',
-#                '10.62', '2', '6.00764.64', 'A-019-0040-01', '人', '公斤：0.00', '有效日期：2025-02-15', '6', '一匙抗菌EX防洗褲',
-#                '12.00 72.00', '總件數：0', '30.00×25.00×28.00', '1.5L', '11103317001', '468', '78', '錦箱數：78', '9.90', '1',
-#                '6.00712.80', 'A-019-0183-01', '公斤：0.00', '有效日期：2025-03-072025-03-08']
 boxCount_keyowrds = ["箱數：", "箱敷"]
 threshold = 4
 
@@ -39,14 +33,19 @@ def get_product_NameCount_pair(ocr_results):
             if keyword in elm:
                 candidate_list.append(elm)
     # step4 產生可能包含商品名稱或數量的candidate_list
-    # print(candidate_list)
+    print(candidate_list)
     boxCount_list = []
     pre_productName = ""
+    rule = re.compile(r"：\d", re.U) #判斷"："後是否是數字
     # step5 產生可能包含商品名稱或數量的candidate_list
     for elm in candidate_list:
         if "：" in elm:
             num = ''.join([x for x in elm if x.isdigit()])
             # print(pre_productName+","+num)
+            if num == "" or pre_productName == "":
+                continue
+            if rule.search(elm) is None: #"："後如果不是數字就continue
+                continue
             pair = [pre_productName, num]
             boxCount_list.append(pair)
             continue
@@ -55,9 +54,15 @@ def get_product_NameCount_pair(ocr_results):
 
 
 if __name__ == '__main__':
-    img_path = './img/Carrefour/crop.jpg'
+    # img_path = './img/Carrefour/2545314538.jpg'
+    # img_path = './img/Carrefour/2545314541.jpg'
+    img_path = './img/Carrefour/2545314544.jpg'
+    # img_path = './img/Carrefour/crop.jpg'
     ocr_server_IP = "192.168.50.29:6000"
     show_ocr_pic = True
     ocr_results = img_send.ocr(img_path, ocr_server_IP, show_ocr_pic)
+    print(ocr_results)
     boxCount_list = get_product_NameCount_pair(ocr_results)
     print(boxCount_list)
+
+
